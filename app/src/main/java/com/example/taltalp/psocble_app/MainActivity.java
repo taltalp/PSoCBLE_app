@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -41,8 +40,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    TextView textView;
-    LineChart mChart, mChart2;
+    LineChart tempChart, lumiChart;
     Vector connectedMajorVector;
 
     int[] Colors = new int[]{Color.RED, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW};
@@ -61,16 +59,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_FORMAT));
 
-        textView = (TextView)findViewById(R.id.textView);
-        textView.setText("aaa");
+        tempChart =(LineChart)findViewById(R.id.tempLineChart);
+        tempChart.setDescription("temperature");
+        tempChart.setData(new LineData());
 
-        mChart =(LineChart)findViewById(R.id.mLineChart);
-        mChart.setDescription("adc1");
-        mChart.setData(new LineData());
-
-        mChart2 =(LineChart)findViewById(R.id.mLineChart2);
-        mChart2.setDescription("adc0");
-        mChart2.setData(new LineData());
+        lumiChart =(LineChart)findViewById(R.id.lumiLineChart);
+        lumiChart.setDescription("luminance");
+        lumiChart.setData(new LineData());
 
         connectedMajorVector = new Vector();
     }
@@ -133,37 +128,40 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                             + ", minor:" + beacon.getId3().toHexString() + ", Distance:" + beacon.getDistance()
                             + ",RSSI" + beacon.getRssi());
 
+                    // iBeacon Major ID
                     int major = beacon.getId2().toInt();
+                    // Check each connection
                     int index = connectedMajorVector.indexOf(major);
                     if(index  == -1){
                         connectedMajorVector.addElement(major);
                         index = connectedMajorVector.size() - 1;
                     }
-                    // int major = 0;
-                    LineData data = mChart.getLineData();
-                    LineData data2 = mChart2.getLineData();
-                    ILineDataSet set = data.getDataSetByIndex(index);
-                    if (set == null){
-                        set = createSet(beacon.getId2().toString(), Colors[index%6]);
-                        data.addDataSet(set);
+
+                    LineData tempData = tempChart.getLineData();
+                    LineData lumiData = lumiChart.getLineData();
+                    ILineDataSet tempDataSet = tempData.getDataSetByIndex(index);
+                    if (tempDataSet == null){
+                        tempDataSet = createSet(beacon.getId2().toString(), Colors[index%6]);
+                        tempData.addDataSet(tempDataSet);
                     }
 
-                    ILineDataSet set2 = data2.getDataSetByIndex(index);
-                    if (set2 == null){
-                        set2 = createSet(beacon.getId2().toString(), Colors[index%6]);
-                        data2.addDataSet(set2);
+                    ILineDataSet lumiDataSet = lumiData.getDataSetByIndex(index);
+                    if (lumiDataSet == null){
+                        lumiDataSet = createSet(beacon.getId2().toString(), Colors[index%6]);
+                        lumiData.addDataSet(lumiDataSet);
                     }
-                    data.addEntry(new Entry(set.getEntryCount(), beacon.getId3().toInt() >> 8), index);
-                    data2.addEntry(new Entry(set2.getEntryCount(), beacon.getId3().toInt() & 0xff), index);
-                    data.notifyDataChanged();
-                    data2.notifyDataChanged();
-                    mChart.notifyDataSetChanged();
-                    mChart.setVisibleXRangeMaximum(50);
-                    mChart.moveViewToX(data.getEntryCount());
 
-                    mChart2.notifyDataSetChanged();
-                    mChart2.setVisibleXRangeMaximum(50);
-                    mChart2.moveViewToX(data2.getEntryCount());
+                    tempData.addEntry(new Entry(tempDataSet.getEntryCount(), beacon.getId3().toInt() >> 8), index);
+                    tempData.notifyDataChanged();
+                    tempChart.notifyDataSetChanged();
+                    tempChart.setVisibleXRangeMaximum(50);
+                    tempChart.moveViewToX(tempData.getEntryCount());
+
+                    lumiData.addEntry(new Entry(lumiDataSet.getEntryCount(), beacon.getId3().toInt() & 0xff), index);
+                    lumiData.notifyDataChanged();
+                    lumiChart.notifyDataSetChanged();
+                    lumiChart.setVisibleXRangeMaximum(50);
+                    lumiChart.moveViewToX(lumiData.getEntryCount());
                 }
             }
         });
