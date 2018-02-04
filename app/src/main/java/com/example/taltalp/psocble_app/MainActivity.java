@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     LineChart tempChart, lumiChart;
     Vector connectedMajorVector;
 
+    int x;
+
     int[] Colors = new int[]{Color.RED, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW};
 
     @Override
@@ -61,13 +63,16 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         tempChart =(LineChart)findViewById(R.id.tempLineChart);
         tempChart.setDescription("temperature");
+        tempChart.getXAxis().setGranularity(1f);
         tempChart.setData(new LineData());
 
         lumiChart =(LineChart)findViewById(R.id.lumiLineChart);
         lumiChart.setDescription("luminance");
+        lumiChart.getXAxis().setGranularity(1f);
         lumiChart.setData(new LineData());
 
         connectedMajorVector = new Vector();
+        x = 0;
     }
 
     @Override
@@ -151,17 +156,19 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                         lumiData.addDataSet(lumiDataSet);
                     }
 
-                    tempData.addEntry(new Entry(tempDataSet.getEntryCount(), beacon.getId3().toInt() >> 8), index);
+                    tempData.addEntry(new Entry(x, beacon.getId3().toInt() & 0xff), index);
                     tempData.notifyDataChanged();
                     tempChart.notifyDataSetChanged();
                     tempChart.setVisibleXRangeMaximum(50);
                     tempChart.moveViewToX(tempData.getEntryCount());
 
-                    lumiData.addEntry(new Entry(lumiDataSet.getEntryCount(), beacon.getId3().toInt() & 0xff), index);
+                    lumiData.addEntry(new Entry(x, beacon.getId3().toInt() >> 8), index);
                     lumiData.notifyDataChanged();
                     lumiChart.notifyDataSetChanged();
                     lumiChart.setVisibleXRangeMaximum(50);
                     lumiChart.moveViewToX(lumiData.getEntryCount());
+
+                    x++;
                 }
             }
         });
