@@ -4,6 +4,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -24,13 +25,17 @@ import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     private static final String IBEACON_FORMAT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
-    // private static final String UUID = "74A23A96-A479-4330-AEFF-2421B6CF443C";
     private static final String UUID =    "00050001-0000-1000-8000-00805F9B0131";
 
     private BeaconManager beaconManager;
@@ -42,10 +47,10 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     LineChart tempChart, lumiChart;
     Vector connectedMajorVector;
-
     int x;
-
     int[] Colors = new int[]{Color.RED, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW};
+
+    private BufferedWriter bw;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +78,24 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         connectedMajorVector = new Vector();
         x = 0;
+
+        if(isExternalStorageWritable()){
+            String fileName = "log.csv";
+            String text = "time,major,temp,lumi\n";
+            String filePath = "/sdcard/" + fileName;
+            File file = new File(filePath);
+            Log.d("beacon", filePath);
+
+            try {
+                FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8");
+                bw = new BufferedWriter(outputStreamWriter);
+                bw.write(text);
+                bw.flush();
+            } catch(Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -135,6 +158,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
                     // iBeacon Major ID
                     int major = beacon.getId2().toInt();
+                    int temp = beacon.getId3().toInt() & 0xff;
+                    int lumi = beacon.getId3().toInt() >> 8;
                     // Check each connection
                     int index = connectedMajorVector.indexOf(major);
                     if(index  == -1){
@@ -156,19 +181,27 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                         lumiData.addDataSet(lumiDataSet);
                     }
 
-                    tempData.addEntry(new Entry(x, beacon.getId3().toInt() & 0xff), index);
+                    tempData.addEntry(new Entry(x, temp), index);
                     tempData.notifyDataChanged();
                     tempChart.notifyDataSetChanged();
                     tempChart.setVisibleXRangeMaximum(50);
                     tempChart.moveViewToX(tempData.getEntryCount());
 
-                    lumiData.addEntry(new Entry(x, beacon.getId3().toInt() >> 8), index);
+                    lumiData.addEntry(new Entry(x, lumi), index);
                     lumiData.notifyDataChanged();
                     lumiChart.notifyDataSetChanged();
                     lumiChart.setVisibleXRangeMaximum(50);
                     lumiChart.moveViewToX(lumiData.getEntryCount());
 
                     x++;
+
+                    try {
+                        bw.write(beacon.getId2().toString() + "," + Integer.toString(temp) + "," + Integer.toString(lumi) + "\n");
+                        bw.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
         });
@@ -188,6 +221,25 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         set.setDrawValues(false);
 
         return set;
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
     }
 
 }
