@@ -30,7 +30,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
@@ -48,7 +51,15 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     LineChart tempChart, lumiChart;
     Vector connectedMajorVector;
     int x;
-    int[] Colors = new int[]{Color.RED, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW};
+    int[] Colors = new int[]{Color.RED,
+            Color.BLUE,
+            Color.CYAN,
+            Color.GREEN,
+            Color.MAGENTA,
+            Color.YELLOW,
+            Color.GRAY,
+            Color.DKGRAY,
+            Color.LTGRAY};
 
     private BufferedWriter bw;
 
@@ -69,18 +80,30 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         tempChart =(LineChart)findViewById(R.id.tempLineChart);
         tempChart.setDescription("temperature");
         tempChart.getXAxis().setGranularity(1f);
+        tempChart.getAxisLeft().setGranularity(1f);
+        tempChart.getAxisLeft().setAxisMaxValue(255f);
+        tempChart.getAxisLeft().setAxisMinValue(0f);
+        tempChart.getAxisRight().setGranularity(1f);
+        tempChart.getAxisRight().setAxisMaxValue(255f);
+        tempChart.getAxisRight().setAxisMinValue(0f);
         tempChart.setData(new LineData());
 
         lumiChart =(LineChart)findViewById(R.id.lumiLineChart);
         lumiChart.setDescription("luminance");
         lumiChart.getXAxis().setGranularity(1f);
+        lumiChart.getAxisLeft().setGranularity(1f);
+        lumiChart.getAxisLeft().setAxisMaxValue(255f);
+        lumiChart.getAxisLeft().setAxisMinValue(0f);
+        lumiChart.getAxisRight().setGranularity(1f);
+        lumiChart.getAxisRight().setAxisMaxValue(255f);
+        lumiChart.getAxisRight().setAxisMinValue(0f);
         lumiChart.setData(new LineData());
 
         connectedMajorVector = new Vector();
         x = 0;
 
         if(isExternalStorageWritable()){
-            String fileName = "log.csv";
+            String fileName = "log" + getNowDate() + ".csv";
             String text = "time,major,temp,lumi\n";
             String filePath = "/sdcard/" + fileName;
             File file = new File(filePath);
@@ -171,13 +194,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     LineData lumiData = lumiChart.getLineData();
                     ILineDataSet tempDataSet = tempData.getDataSetByIndex(index);
                     if (tempDataSet == null){
-                        tempDataSet = createSet(beacon.getId2().toString(), Colors[index%6]);
+                        tempDataSet = createSet(beacon.getId2().toString(), Colors[index%9]);
                         tempData.addDataSet(tempDataSet);
                     }
 
                     ILineDataSet lumiDataSet = lumiData.getDataSetByIndex(index);
                     if (lumiDataSet == null){
-                        lumiDataSet = createSet(beacon.getId2().toString(), Colors[index%6]);
+                        lumiDataSet = createSet(beacon.getId2().toString(), Colors[index%9]);
                         lumiData.addDataSet(lumiDataSet);
                     }
 
@@ -196,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     x++;
 
                     try {
-                        bw.write(beacon.getId2().toString() + "," + Integer.toString(temp) + "," + Integer.toString(lumi) + "\n");
+                        bw.write(getNowDate() + "," + Integer.toString(major) + "," + Integer.toString(temp) + "," + Integer.toString(lumi) + "\n");
                         bw.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -242,4 +265,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         return false;
     }
 
+    public static String getNowDate(){
+        final DateFormat df = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+        final Date date = new Date(System.currentTimeMillis());
+        return df.format(date);
+    }
 }
