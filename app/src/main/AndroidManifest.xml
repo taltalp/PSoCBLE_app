@@ -19,10 +19,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".TestBeaconService"
-            android:enabled="true"
-            android:exported="true"></service>
     </application>
 
     <uses-permission android:name="android.permission.BLUETOOTH"/>
