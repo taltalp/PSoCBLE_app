@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     int[] Colors = new int[]{Color.RED, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.YELLOW};
 
     private BufferedWriter bw;
+    private DemoConnector demoConnector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +98,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 e.printStackTrace();
             }
         }
+
+        demoConnector = new DemoConnector();
+        demoConnector.InitConnection();
+        demoConnector.Connect();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
@@ -152,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 for (Beacon beacon : beacons) {
                     // ログの出力
-                    Log.d("Beacon", "UUID:" + beacon.getId1() + ", major:" + beacon.getId2()
+                    Log.d("BeaconValue", "UUID:" + beacon.getId1() + ", major:" + beacon.getId2()
                             + ", minor:" + beacon.getId3().toHexString() + ", Distance:" + beacon.getDistance()
                             + ",RSSI" + beacon.getRssi());
 
@@ -194,6 +202,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     lumiChart.moveViewToX(lumiData.getEntryCount());
 
                     x++;
+
+                    demoConnector.SendIllumination(major, lumi);
 
                     try {
                         bw.write(beacon.getId2().toString() + "," + Integer.toString(temp) + "," + Integer.toString(lumi) + "\n");
