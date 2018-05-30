@@ -9,7 +9,6 @@
     <view
         android:id="@+id/tempLineChart"
         class="com.github.mikephil.charting.charts.LineChart"
-        id="@+id/view"
         android:layout_width="600dp"
         android:layout_height="300dp"
         android:layout_marginEnd="8dp"
@@ -24,7 +23,6 @@
     <view
         android:id="@+id/lumiLineChart"
         class="com.github.mikephil.charting.charts.LineChart"
-        id="@+id/view2"
         android:layout_width="600dp"
         android:layout_height="300dp"
         android:layout_marginLeft="8dp"
